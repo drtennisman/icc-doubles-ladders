@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ICC Doubles Ladders</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#021f3d">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f0f4f0;
+      color: #1a1a1a;
+      min-height: 100vh;
+      padding-bottom: 72px;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: linear-gradient(180deg, #052d54 0%, #021f3d 100%);
+      color: white;
+      padding: 16px 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .header-inner { max-width: 480px; margin: 0 auto; }
+    .header h1 { font-size: 19px; font-weight: 700; text-align: center; }
+    .header .subtitle {
+      font-size: 11px; opacity: 0.6; margin-top: 2px;
+      font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase;
+      text-align: center;
+    }
+    .ladder-selector { margin-top: 12px; }
+    .ladder-selector select {
+      width: 100%; padding: 10px 14px;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 8px; font-size: 14px; font-weight: 600;
+      background: rgba(255,255,255,0.1); color: white;
+      appearance: none; -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23ffffff' stroke-width='2' fill='none'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px;
+    }
+    .ladder-selector select option { color: #1a1a1a; background: white; }
+
+    /* ── Bottom nav ── */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: white; border-top: 1px solid #e0e0e0;
+      display: flex; z-index: 10; box-shadow: 0 -2px 8px rgba(0,0,0,0.08);
+    }
+    .nav-btn {
+      flex: 1; padding: 10px 4px 8px; border: none; background: none;
+      cursor: pointer; display: flex; flex-direction: column; align-items: center;
+      gap: 3px; font-size: 10px; font-weight: 600; color: #999;
+      letter-spacing: 0.3px; text-transform: uppercase; transition: color 0.15s;
+    }
+    .nav-btn.active { color: #052d54; }
+    .nav-icon { font-size: 20px; line-height: 1; }
+
+    /* ── Tab panels ── */
+    .tab { display: none; }
+    .tab.active { display: block; }
+    .container { max-width: 480px; margin: 0 auto; padding: 20px 16px; }
+
+    /* ── Cards ── */
+    .card {
+      background: white; border-radius: 14px; padding: 20px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.08); margin-bottom: 16px;
+    }
+    .card-title {
+      font-size: 13px; font-weight: 700; color: #052d54;
+      text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px;
+    }
+
+    /* ── Form fields ── */
+    .field { margin-bottom: 18px; }
+    .field:last-child { margin-bottom: 0; }
+    .field label {
+      display: block; font-size: 12px; font-weight: 600; color: #666;
+      text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;
+    }
+    .field select {
+      width: 100%; padding: 12px 14px; border: 2px solid #e0e0e0;
+      border-radius: 10px; font-size: 16px; background: #fafafa; color: #1a1a1a;
+      appearance: none; -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23666' stroke-width='2' fill='none'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px;
+    }
+    .field select:focus { outline: none; border-color: #052d54; }
+
+    /* Player slot color accents */
+    .slot-a { border-left: 5px solid #2e7d32 !important; }
+    .slot-b { border-left: 5px solid #1565c0 !important; }
+    .slot-c { border-left: 5px solid #e65100 !important; }
+    .slot-d { border-left: 5px solid #6a1b9a !important; }
+    .slot-tag { display: inline-block; width: 16px; font-weight: 800; }
+    .tag-a { color: #2e7d32; } .tag-b { color: #1565c0; }
+    .tag-c { color: #e65100; } .tag-d { color: #6a1b9a; }
+
+    /* ── Set rows ── */
+    .set-block {
+      border: 1px solid #eee; border-radius: 12px; padding: 12px 14px; margin-bottom: 12px;
+      background: #fafbfc;
+    }
+    .set-head {
+      font-size: 11px; font-weight: 800; color: #052d54;
+      text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 10px;
+    }
+    .set-teams { display: flex; align-items: center; gap: 8px; }
+    .set-team { flex: 1; text-align: center; }
+    .set-team-name {
+      font-size: 12px; font-weight: 700; color: #333; margin-bottom: 6px;
+      min-height: 30px; display: flex; align-items: center; justify-content: center;
+      line-height: 1.2;
+    }
+    .set-score-sel {
+      width: 100%; padding: 10px 4px; border: 2px solid #e0e0e0; border-radius: 8px;
+      font-size: 18px; font-weight: 800; text-align: center; background: white; color: #052d54;
+      appearance: none; -webkit-appearance: none; text-align-last: center;
+    }
+    .set-score-sel:focus { outline: none; border-color: #052d54; }
+    .set-vs { font-size: 12px; font-weight: 800; color: #ccc; padding-top: 28px; }
+
+    /* ── Preview card ── */
+    .preview-card {
+      background: #f0f6ff; border: 1px solid #d4e4f7; border-radius: 12px;
+      padding: 14px; margin-bottom: 16px;
+    }
+    .preview-title {
+      font-size: 11px; font-weight: 800; color: #052d54; text-transform: uppercase;
+      letter-spacing: 0.6px; margin-bottom: 10px;
+    }
+    .preview-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 6px 0; border-top: 1px solid #e0ebf7; font-size: 13px;
+    }
+    .preview-row:first-of-type { border-top: none; }
+    .preview-name { font-weight: 700; color: #1a1a1a; }
+    .preview-stat { font-weight: 700; color: #052d54; font-size: 12px; }
+    .preview-stat .muted { color: #8aa; font-weight: 600; }
+
+    /* ── Submit button ── */
+    .submit-btn {
+      width: 100%; padding: 16px; background: linear-gradient(135deg, #052d54, #021f3d);
+      color: white; border: none; border-radius: 12px; font-size: 17px; font-weight: 700;
+      cursor: pointer; transition: opacity 0.2s, transform 0.1s; box-shadow: 0 2px 8px rgba(5,45,84,0.3);
+    }
+    .submit-btn:active { transform: scale(0.98); }
+    .submit-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    /* ── Status ── */
+    .status {
+      text-align: center; padding: 12px; border-radius: 10px; font-size: 14px;
+      font-weight: 600; margin-top: 14px; display: none;
+    }
+    .status.success { display: block; background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    .status.error   { display: block; background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    .status.loading { display: block; background: #e3edf7; color: #052d54; border: 1px solid #b8d4ea; }
+
+    /* ── Refresh button ── */
+    .refresh-btn {
+      width: 100%; padding: 12px; background: white; color: #052d54; border: 2px solid #052d54;
+      border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer;
+      margin-bottom: 16px; transition: all 0.15s;
+    }
+    .refresh-btn:active { background: #052d54; color: white; }
+
+    /* ── Standings list ── */
+    .standing-row {
+      display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: white;
+      border-radius: 12px; margin-bottom: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    .rank-badge {
+      width: 30px; height: 30px; border-radius: 50%; background: #e3edf7; color: #052d54;
+      font-size: 13px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .rank-badge.gold { background: #ffd700; color: #7a5c00; }
+    .rank-badge.silver { background: #e0e0e0; color: #555; }
+    .rank-badge.bronze { background: #cd7f32; color: white; }
+    .standing-body { flex: 1; min-width: 0; }
+    .standing-name {
+      font-size: 14px; font-weight: 700; color: #1a1a1a;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .standing-stats-line { font-size: 11px; color: #777; margin-top: 2px; font-weight: 600; }
+    .standing-pct { text-align: right; flex-shrink: 0; }
+    .standing-pct-big { font-size: 16px; font-weight: 800; color: #052d54; }
+    .standing-pct-sub { font-size: 10px; color: #999; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; }
+
+    /* ── Matchup (group of 4) cards ── */
+    .matchup-card {
+      background: white; border-radius: 14px; padding: 14px 18px; margin-bottom: 12px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    .matchup-label {
+      font-size: 11px; font-weight: 700; color: #aaa; text-transform: uppercase;
+      letter-spacing: 0.8px; margin-bottom: 10px;
+    }
+    .matchup-line { display: flex; align-items: center; gap: 10px; padding: 4px 0; }
+    .matchup-rank {
+      width: 24px; height: 24px; border-radius: 50%; background: #e3edf7; color: #052d54;
+      font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .matchup-name { font-size: 14px; font-weight: 700; color: #052d54; }
+
+    /* ── Recent rows ── */
+    .recent-row {
+      background: white; border-radius: 12px; padding: 12px 14px; margin-bottom: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    .recent-meta {
+      font-size: 10px; color: #aaa; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.4px; margin-bottom: 6px;
+    }
+    .recent-players { font-size: 13px; font-weight: 700; color: #1a1a1a; margin-bottom: 6px; }
+    .recent-sets { font-size: 13px; font-weight: 800; color: #052d54; letter-spacing: 1px; }
+    .recent-sets .sep { color: #ccc; font-weight: 600; margin: 0 4px; }
+
+    .loading-text { text-align: center; color: #aaa; padding: 30px 0; font-size: 14px; }
+
+    /* ── Confirm modal ── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 200;
+      display: flex; align-items: center; justify-content: center; padding: 24px;
+    }
+    .modal-box {
+      background: white; border-radius: 18px; padding: 22px 20px 20px; width: 100%;
+      max-width: 380px; box-shadow: 0 12px 40px rgba(0,0,0,0.25); max-height: 90vh; overflow-y: auto;
+    }
+    .modal-title {
+      font-size: 12px; font-weight: 800; color: #052d54; text-transform: uppercase;
+      letter-spacing: 1px; text-align: center; margin-bottom: 16px;
+    }
+    .modal-sets {
+      background: #fafbfc; border: 1px solid #eee; border-radius: 10px;
+      padding: 10px 12px; margin-bottom: 14px; font-size: 12px; color: #555; font-weight: 600;
+    }
+    .modal-set-line { padding: 3px 0; }
+    .modal-set-line b { color: #052d54; }
+    .modal-players { border-top: 1px solid #f0f0f0; border-bottom: 1px solid #f0f0f0; padding: 8px 0; margin-bottom: 16px; }
+    .modal-prow { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; }
+    .modal-pname { font-size: 14px; font-weight: 700; color: #1a1a1a; }
+    .modal-pstat { font-size: 12px; font-weight: 700; color: #052d54; }
+    .modal-pstat .muted { color: #999; font-weight: 600; }
+    .modal-round-tag { font-size: 11px; color: #aaa; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; text-align: center; margin-bottom: 16px; }
+    .modal-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .modal-cancel-btn { padding: 14px; background: #f5f5f5; color: #555; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; }
+    .modal-confirm-btn { padding: 14px; background: #28a745; color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="header-inner">
+      <h1>ICC Doubles Ladders</h1>
+      <div class="subtitle">Doubles Rankings</div>
+      <div class="ladder-selector">
+        <select id="ladderSelect" onchange="onLadderChange()">
+          <option value="">Loading ladders...</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SUBMIT TAB ══ -->
+  <div class="tab active" id="tab-submit">
+    <div class="container">
+      <div class="card">
+        <div class="card-title">Submit Group Result</div>
+
+        <div class="field">
+          <label>Round</label>
+          <select id="roundSelect" onchange="onRoundChange()">
+            <option value="">Select round...</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label><span class="slot-tag tag-a">A</span> Player A</label>
+          <select id="playerA" class="slot-a" onchange="onPlayersChange()"><option value="">Select player...</option></select>
+        </div>
+        <div class="field">
+          <label><span class="slot-tag tag-b">B</span> Player B</label>
+          <select id="playerB" class="slot-b" onchange="onPlayersChange()"><option value="">Select player...</option></select>
+        </div>
+        <div class="field">
+          <label><span class="slot-tag tag-c">C</span> Player C</label>
+          <select id="playerC" class="slot-c" onchange="onPlayersChange()"><option value="">Select player...</option></select>
+        </div>
+        <div class="field">
+          <label><span class="slot-tag tag-d">D</span> Player D</label>
+          <select id="playerD" class="slot-d" onchange="onPlayersChange()"><option value="">Select player...</option></select>
+        </div>
+      </div>
+
+      <div class="card" id="setsCard" style="display:none;">
+        <div class="card-title">Set Scores — First to 6</div>
+        <div id="setsContainer"></div>
+      </div>
+
+      <div class="preview-card" id="previewCard" style="display:none;">
+        <div class="preview-title">Round Totals Preview</div>
+        <div id="previewBody"></div>
+      </div>
+
+      <button class="submit-btn" id="submitBtn" onclick="submitResult()" disabled>Submit Result</button>
+      <div class="status" id="statusMsg"></div>
+    </div>
+  </div>
+
+  <!-- ══ STANDINGS TAB ══ -->
+  <div class="tab" id="tab-standings">
+    <div class="container">
+      <button class="refresh-btn" onclick="loadStandings()">Refresh Standings</button>
+      <div id="standingsList"><div class="loading-text">Tap refresh to load standings</div></div>
+    </div>
+  </div>
+
+  <!-- ══ MATCHUPS TAB ══ -->
+  <div class="tab" id="tab-matchups">
+    <div class="container">
+      <button class="refresh-btn" onclick="loadMatchups()">Refresh Matchups</button>
+      <div id="matchupsList"><div class="loading-text">Tap refresh to load matchups</div></div>
+    </div>
+  </div>
+
+  <!-- ══ RECENT TAB ══ -->
+  <div class="tab" id="tab-recent">
+    <div class="container">
+      <button class="refresh-btn" onclick="loadRecent()">Refresh Recent</button>
+      <div id="recentList"><div class="loading-text">Tap refresh to load recent groups</div></div>
+    </div>
+  </div>
+
+  <!-- ══ Bottom Nav ══ -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" id="nav-submit" onclick="switchTab('submit')"><span class="nav-icon">🎾</span>Submit</button>
+    <button class="nav-btn" id="nav-standings" onclick="switchTab('standings')"><span class="nav-icon">🏆</span>Standings</button>
+    <button class="nav-btn" id="nav-matchups" onclick="switchTab('matchups')"><span class="nav-icon">👥</span>Matchups</button>
+    <button class="nav-btn" id="nav-recent" onclick="switchTab('recent')"><span class="nav-icon">📋</span>Recent</button>
+  </nav>
+
+  <!-- ══ Confirm Modal ══ -->
+  <div class="modal-overlay" id="confirmModal" style="display:none;">
+    <div class="modal-box">
+      <div class="modal-title">Confirm Group Result</div>
+      <div class="modal-round-tag" id="modalRound"></div>
+      <div class="modal-sets" id="modalSets"></div>
+      <div class="modal-players" id="modalPlayers"></div>
+      <div class="modal-buttons">
+        <button class="modal-cancel-btn" onclick="closeConfirm()">Cancel</button>
+        <button class="modal-confirm-btn" onclick="confirmSubmit()">Confirm ✓</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ── Configuration ───────────────────────────────────────
+    // Paste your deployed Doubles Apps Script Web App URL here:
+    const APPS_SCRIPT_URL = 'PASTE_YOUR_DOUBLES_WEB_APP_URL_HERE';
+
+    // ── State ────────────────────────────────────────────────
+    let ladders = [];
+    let currentLadder = null;
+    let pendingPayload = null;
+
+    // Rotation: for each set, which slots pair up. Slots A,B,C,D = 0,1,2,3
+    const ROTATION = [
+      { team1: [0, 1], team2: [2, 3] },  // Set 1: A&B vs C&D
+      { team1: [0, 2], team2: [1, 3] },  // Set 2: A&C vs B&D
+      { team1: [0, 3], team2: [1, 2] }   // Set 3: A&D vs B&C
+    ];
+    const SLOT_IDS = ['playerA', 'playerB', 'playerC', 'playerD'];
+    const SLOT_TAGS = ['A', 'B', 'C', 'D'];
+
+    document.addEventListener('DOMContentLoaded', loadLadders);
+
+    // ── Load ladders ─────────────────────────────────────────
+    async function loadLadders() {
+      const sel = document.getElementById('ladderSelect');
+      try {
+        const res = await fetch(APPS_SCRIPT_URL + '?action=ladders', { redirect: 'follow' });
+        const data = await res.json();
+        ladders = data.ladders || [];
+        if (ladders.length === 0) { sel.innerHTML = '<option value="">No active ladders</option>'; return; }
+        sel.innerHTML = ladders.map(l => `<option value="${escapeHtml(l.name)}">${escapeHtml(l.name)}</option>`).join('');
+        const saved = localStorage.getItem('icc_dbl_last_ladder');
+        if (saved && ladders.find(l => l.name === saved)) sel.value = saved;
+        onLadderChange();
+      } catch (err) {
+        console.error(err);
+        sel.innerHTML = '<option value="">Could not load ladders</option>';
+      }
+    }
+
+    function onLadderChange() {
+      const name = document.getElementById('ladderSelect').value;
+      currentLadder = ladders.find(l => l.name === name) || null;
+      if (currentLadder) localStorage.setItem('icc_dbl_last_ladder', name);
+      populateRounds();
+      resetForm();
+    }
+
+    function onRoundChange() {
+      const sel = document.getElementById('roundSelect');
+      const round = Number(sel.value);
+      if (currentLadder && round) {
+        localStorage.setItem('icc_dbl_current_round_' + currentLadder.name, round);
+        Array.from(sel.options).forEach(opt => {
+          const n = Number(opt.value);
+          if (n) opt.textContent = 'Round ' + n + (n === round ? ' (current)' : '');
+        });
+      }
+      checkFormReady();
+    }
+
+    function populateRounds() {
+      const sel = document.getElementById('roundSelect');
+      sel.innerHTML = '<option value="">Select round...</option>';
+      if (!currentLadder) return;
+      const savedRound = Number(localStorage.getItem('icc_dbl_current_round_' + currentLadder.name));
+      for (let i = 1; i <= currentLadder.rounds; i++) {
+        const opt = document.createElement('option');
+        opt.value = i;
+        opt.textContent = savedRound === i ? 'Round ' + i + ' (current)' : 'Round ' + i;
+        sel.appendChild(opt);
+      }
+      if (savedRound) sel.value = savedRound;
+    }
+
+    // ── Player dropdowns (4 slots, filter out chosen real players) ──
+    function getSlotValues() { return SLOT_IDS.map(id => document.getElementById(id).value); }
+
+    function populatePlayers() {
+      const chosen = getSlotValues();
+      SLOT_IDS.forEach((id, slotIdx) => {
+        const sel = document.getElementById(id);
+        const mine = sel.value;
+        // Real players chosen in OTHER slots get filtered out (Sub always allowed)
+        const takenElsewhere = chosen.filter((v, i) => i !== slotIdx && v && v !== 'Sub');
+        sel.innerHTML = '<option value="">Select player...</option><option value="Sub">Sub</option>';
+        if (currentLadder) {
+          currentLadder.players.forEach(name => {
+            if (takenElsewhere.indexOf(name) === -1) {
+              const opt = document.createElement('option');
+              opt.value = name; opt.textContent = name;
+              sel.appendChild(opt);
+            }
+          });
+        }
+        sel.value = mine;
+      });
+    }
+
+    function onPlayersChange() {
+      populatePlayers();
+      renderSets();
+      updatePreview();
+      checkFormReady();
+    }
+
+    // ── Set entry UI ─────────────────────────────────────────
+    function allPlayersChosen() { return getSlotValues().every(v => v); }
+
+    function renderSets() {
+      const card = document.getElementById('setsCard');
+      const container = document.getElementById('setsContainer');
+      if (!allPlayersChosen()) { card.style.display = 'none'; container.innerHTML = ''; return; }
+
+      const names = getSlotValues();
+      card.style.display = 'block';
+      container.innerHTML = ROTATION.map((rot, si) => {
+        const t1 = rot.team1.map(i => SLOT_TAGS[i] + '. ' + names[i]).join(' & ');
+        const t2 = rot.team2.map(i => SLOT_TAGS[i] + '. ' + names[i]).join(' & ');
+        return `
+          <div class="set-block">
+            <div class="set-head">Set ${si + 1}</div>
+            <div class="set-teams">
+              <div class="set-team">
+                <div class="set-team-name">${escapeHtml(t1)}</div>
+                ${scoreSelect('set' + si + 't1')}
+              </div>
+              <div class="set-vs">vs</div>
+              <div class="set-team">
+                <div class="set-team-name">${escapeHtml(t2)}</div>
+                ${scoreSelect('set' + si + 't2')}
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+
+      // Wire up onchange after injecting
+      for (let si = 0; si < 3; si++) {
+        document.getElementById('set' + si + 't1').onchange = () => { updatePreview(); checkFormReady(); };
+        document.getElementById('set' + si + 't2').onchange = () => { updatePreview(); checkFormReady(); };
+      }
+    }
+
+    function scoreSelect(id) {
+      let opts = '<option value="">–</option>';
+      for (let n = 0; n <= 6; n++) opts += `<option value="${n}">${n}</option>`;
+      return `<select class="set-score-sel" id="${id}">${opts}</select>`;
+    }
+
+    function readSets() {
+      const sets = [];
+      for (let si = 0; si < 3; si++) {
+        const t1el = document.getElementById('set' + si + 't1');
+        const t2el = document.getElementById('set' + si + 't2');
+        if (!t1el || !t2el) return null;
+        if (t1el.value === '' || t2el.value === '') return null;
+        sets.push({ t1: Number(t1el.value), t2: Number(t2el.value) });
+      }
+      return sets;
+    }
+
+    // Valid set = first to 6: exactly one team has 6, the other 0-5
+    function setValid(s) {
+      const hi = Math.max(s.t1, s.t2), lo = Math.min(s.t1, s.t2);
+      return hi === 6 && lo >= 0 && lo <= 5;
+    }
+
+    // ── Compute per-player round totals from the rotation ────
+    function computeTotals(names, sets) {
+      const totals = names.map(n => ({ name: n, setsW: 0, setsL: 0, gamesW: 0, gamesL: 0 }));
+      sets.forEach((s, si) => {
+        const rot = ROTATION[si];
+        const t1won = s.t1 > s.t2;
+        rot.team1.forEach(i => {
+          totals[i].gamesW += s.t1; totals[i].gamesL += s.t2;
+          if (t1won) totals[i].setsW++; else totals[i].setsL++;
+        });
+        rot.team2.forEach(i => {
+          totals[i].gamesW += s.t2; totals[i].gamesL += s.t1;
+          if (!t1won) totals[i].setsW++; else totals[i].setsL++;
+        });
+      });
+      return totals;
+    }
+
+    function updatePreview() {
+      const card = document.getElementById('previewCard');
+      const body = document.getElementById('previewBody');
+      const sets = readSets();
+      if (!allPlayersChosen() || !sets) { card.style.display = 'none'; return; }
+      const names = getSlotValues();
+      const totals = computeTotals(names, sets);
+      card.style.display = 'block';
+      body.innerHTML = totals.map((t, i) =>
+        `<div class="preview-row">
+           <span class="preview-name"><span class="tag-${'abcd'[i]}">${SLOT_TAGS[i]}.</span> ${escapeHtml(t.name)}</span>
+           <span class="preview-stat">${t.setsW}–${t.setsL} sets <span class="muted">· ${t.gamesW}–${t.gamesL} games</span></span>
+         </div>`
+      ).join('');
+    }
+
+    function checkFormReady() {
+      const btn = document.getElementById('submitBtn');
+      if (!currentLadder) { btn.disabled = true; return; }
+      const round = document.getElementById('roundSelect').value;
+      const sets = readSets();
+      const ready = round && allPlayersChosen() && sets && sets.every(setValid);
+      btn.disabled = !ready;
+    }
+
+    // ── Tab switching ─────────────────────────────────────────
+    function switchTab(name) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('tab-' + name).classList.add('active');
+      document.getElementById('nav-' + name).classList.add('active');
+    }
+
+    // ── Submit (validate + confirm modal) ─────────────────────
+    function submitResult() {
+      if (!currentLadder) { showStatus('Please pick a ladder.', 'error'); return; }
+      const round = document.getElementById('roundSelect').value;
+      if (!round) { showStatus('Please select a round.', 'error'); return; }
+      if (!allPlayersChosen()) { showStatus('Please pick all 4 players.', 'error'); return; }
+
+      const names = getSlotValues();
+      // No duplicate real players (Sub may repeat)
+      const reals = names.filter(n => n !== 'Sub');
+      if (new Set(reals).size !== reals.length) { showStatus('A player is listed twice.', 'error'); return; }
+
+      const sets = readSets();
+      if (!sets) { showStatus('Please complete all 3 set scores.', 'error'); return; }
+      for (let i = 0; i < 3; i++) {
+        if (!setValid(sets[i])) { showStatus('Set ' + (i + 1) + ' must be first-to-6 (e.g. 6–3).', 'error'); return; }
+      }
+
+      const totals = computeTotals(names, sets);
+      pendingPayload = {
+        ladder: currentLadder.name,
+        date: todayStr(),
+        round: Number(round),
+        players: names,
+        sets: sets
+      };
+
+      // Fill modal
+      document.getElementById('modalRound').textContent = currentLadder.name + ' · Round ' + round;
+      document.getElementById('modalSets').innerHTML = ROTATION.map((rot, si) => {
+        const t1 = rot.team1.map(i => SLOT_TAGS[i]).join('&');
+        const t2 = rot.team2.map(i => SLOT_TAGS[i]).join('&');
+        return `<div class="modal-set-line">Set ${si + 1}: <b>${t1}</b> ${sets[si].t1}–${sets[si].t2} <b>${t2}</b></div>`;
+      }).join('');
+      document.getElementById('modalPlayers').innerHTML = totals.map((t, i) =>
+        `<div class="modal-prow">
+           <span class="modal-pname">${SLOT_TAGS[i]}. ${escapeHtml(t.name)}</span>
+           <span class="modal-pstat">${t.setsW}–${t.setsL} sets <span class="muted">· ${t.gamesW}–${t.gamesL} games</span></span>
+         </div>`
+      ).join('');
+      document.getElementById('confirmModal').style.display = 'flex';
+    }
+
+    function closeConfirm() {
+      document.getElementById('confirmModal').style.display = 'none';
+      pendingPayload = null;
+    }
+
+    async function confirmSubmit() {
+      if (!pendingPayload) return;
+      document.getElementById('confirmModal').style.display = 'none';
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true; btn.textContent = 'Submitting...';
+      showStatus('Submitting...', 'loading');
+      const payload = pendingPayload; pendingPayload = null;
+      try {
+        await fetch(APPS_SCRIPT_URL, {
+          method: 'POST', mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        localStorage.setItem('icc_dbl_current_round_' + currentLadder.name, payload.round);
+        showStatus('Group result logged for Round ' + payload.round + '!', 'success');
+        resetForm();
+      } catch (err) {
+        showStatus('Error submitting. Please try again.', 'error');
+        console.error(err);
+      } finally {
+        btn.textContent = 'Submit Result';
+        checkFormReady();
+      }
+    }
+
+    function todayStr() {
+      const d = new Date();
+      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    }
+
+    function resetForm() {
+      populateRounds();
+      SLOT_IDS.forEach(id => { const s = document.getElementById(id); s.value = ''; });
+      populatePlayers();
+      document.getElementById('setsCard').style.display = 'none';
+      document.getElementById('setsContainer').innerHTML = '';
+      document.getElementById('previewCard').style.display = 'none';
+      checkFormReady();
+    }
+
+    // ── Load standings / matchups / recent ────────────────────
+    async function fetchLadderData() {
+      if (!currentLadder) throw new Error('No ladder selected.');
+      const url = APPS_SCRIPT_URL + '?action=standings&ladder=' + encodeURIComponent(currentLadder.name);
+      const res = await fetch(url, { redirect: 'follow' });
+      return await res.json();
+    }
+
+    async function loadStandings() {
+      const c = document.getElementById('standingsList');
+      c.innerHTML = '<div class="loading-text">Loading...</div>';
+      try { renderStandings((await fetchLadderData()).standings); }
+      catch (err) { c.innerHTML = '<div class="loading-text">Could not load standings.</div>'; console.error(err); }
+    }
+
+    function renderStandings(standings) {
+      const c = document.getElementById('standingsList');
+      if (!standings || standings.length === 0) { c.innerHTML = '<div class="loading-text">No players yet.</div>'; return; }
+      c.innerHTML = standings.map((p, i) => {
+        const rank = i + 1;
+        let badge = '';
+        if (rank === 1) badge = 'gold'; else if (rank === 2) badge = 'silver'; else if (rank === 3) badge = 'bronze';
+        const setsPct = (p.setsPct * 100).toFixed(1) + '%';
+        const gamesPct = (p.gamesPct * 100).toFixed(1) + '%';
+        return `
+          <div class="standing-row">
+            <div class="rank-badge ${badge}">${rank}</div>
+            <div class="standing-body">
+              <div class="standing-name">${escapeHtml(p.name)}</div>
+              <div class="standing-stats-line">Sets ${p.setsWon}–${p.setsLost} · Games ${p.gamesWon}–${p.gamesLost} · ${gamesPct} GW</div>
+            </div>
+            <div class="standing-pct">
+              <div class="standing-pct-big">${setsPct}</div>
+              <div class="standing-pct-sub">Sets Win %</div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    async function loadMatchups() {
+      const c = document.getElementById('matchupsList');
+      c.innerHTML = '<div class="loading-text">Loading...</div>';
+      try { renderMatchups((await fetchLadderData()).matchups); }
+      catch (err) { c.innerHTML = '<div class="loading-text">Could not load matchups.</div>'; console.error(err); }
+    }
+
+    function renderMatchups(matchups) {
+      const c = document.getElementById('matchupsList');
+      if (!matchups || matchups.length === 0) { c.innerHTML = '<div class="loading-text">No matchups yet.</div>'; return; }
+      c.innerHTML = matchups.map((group, gi) => `
+        <div class="matchup-card">
+          <div class="matchup-label">Group ${gi + 1}</div>
+          ${group.map(p => `
+            <div class="matchup-line">
+              <div class="matchup-rank">${p.rank}</div>
+              <div class="matchup-name">${escapeHtml(p.name)}</div>
+            </div>`).join('')}
+        </div>`).join('');
+    }
+
+    async function loadRecent() {
+      const c = document.getElementById('recentList');
+      c.innerHTML = '<div class="loading-text">Loading...</div>';
+      try { renderRecent((await fetchLadderData()).recent); }
+      catch (err) { c.innerHTML = '<div class="loading-text">Could not load recent groups.</div>'; console.error(err); }
+    }
+
+    function renderRecent(recent) {
+      const c = document.getElementById('recentList');
+      if (!recent || recent.length === 0) { c.innerHTML = '<div class="loading-text">No groups logged yet.</div>'; return; }
+      c.innerHTML = recent.map(m => `
+        <div class="recent-row">
+          <div class="recent-meta">${escapeHtml(String(m.date))} · Round ${escapeHtml(String(m.round))}</div>
+          <div class="recent-players">${m.players.map(escapeHtml).join(' · ')}</div>
+          <div class="recent-sets">${m.sets.map(s => escapeHtml(String(s))).join('<span class="sep">/</span>')}</div>
+        </div>`).join('');
+    }
+
+    // ── Status ────────────────────────────────────────────────
+    function showStatus(msg, type) {
+      const el = document.getElementById('statusMsg');
+      el.textContent = msg; el.className = 'status ' + type;
+      if (type === 'success') setTimeout(() => { el.style.display = 'none'; }, 4000);
+    }
+
+    function escapeHtml(str) {
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    }
+  </script>
+
+</body>
+</html>
